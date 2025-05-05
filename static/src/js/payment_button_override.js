@@ -13,48 +13,43 @@ patch(PaymentScreen.prototype, {
     },
 
     async validateOrder(isForceValidate) {
-        const order = this.pos.get_order();
         const session = this.pos.config.current_session_id;
         const session_discount_limit = session?.session_discount_limit ?? 0;
+        const order = this.pos.get_order();
+        const session_discount_limit_amount = session?.session_discount_limit_amount ?? 0;
 
-        let totalLineDiscount = 0;
-        let totalGlobalDiscount = 0;
+        if (session_discount_limit) {
 
-        const discountProductId = this.pos.config.discount_product_id?.id;
-        console.log(this.pos.config.discount_product_id)
-        console.log(discountProductId)
+            let totalLineDiscount = 0;
+            let totalGlobalDiscount = 0;
+            const discountProductId = this.pos.config.discount_product_id?.id;
 
-        order.get_orderlines().forEach(line => {
-            if (line.product_id?.id === discountProductId) {
-                totalGlobalDiscount += Math.abs(line.get_price_with_tax());
-            } else {
-                const unitPrice = line.get_unit_price();
-                const discount = line.get_discount();
-                const quantity = line.get_quantity();
+            order.get_orderlines().forEach(line => {
+                if (line.product_id?.id === discountProductId) {
+                    totalGlobalDiscount += Math.abs(line.get_price_with_tax());
+                } else {
+                    const unitPrice = line.get_unit_price();
+                    const discount = line.get_discount();
+                    const quantity = line.get_quantity();
 
-                totalLineDiscount += (unitPrice * discount / 100) * quantity;
-            }
-        });
-
-        const totalDiscount = totalLineDiscount + totalGlobalDiscount;
-        console.log(totalLineDiscount)
-        console.log(totalGlobalDiscount)
-        console.log(totalDiscount)
-        console.log(session_discount_limit)
-
-        if (totalDiscount > session_discount_limit || session_discount_limit <= 0) {
-            await this.notification.add(_t("Session discount limit exceeded."), {
-                title: "Validation Error",
-                type: "warning"
+                    totalLineDiscount += (unitPrice * discount / 100) * quantity;
+                }
             });
-            return;
+
+            const totalDiscount = totalLineDiscount + totalGlobalDiscount;
+
+            if (totalDiscount > session_discount_limit_amount || session_discount_limit_amount <= 0) {
+                await this.notification.add(_t("Session discount limit exceeded."), {
+                    title: "Validation Error",
+                    type: "warning"
+                });
+                return;
+            }
+            await rpc("/pos/update_session_discount_limit", {
+                session_id: session.id,
+                used_discount: totalDiscount
+            });
         }
-
-        await rpc("/pos/update_session_discount_limit", {
-            session_id: session.id,
-            used_discount: totalDiscount
-        });
-
         return super.validateOrder(isForceValidate);
     }
 });

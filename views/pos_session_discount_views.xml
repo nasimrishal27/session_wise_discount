@@ -6,7 +6,8 @@
         <field name="inherit_id" ref="point_of_sale.view_pos_session_form"/>
         <field name="arch" type="xml">
             <xpath expr="//group" position="inside">
-                <field name="session_discount_limit" readonly="1"/>
+                <field name="session_discount_limit" invisible="1"/>
+                <field name="session_discount_limit_amount" readonly="1"/>
             </xpath>
         </field>
     </record>
