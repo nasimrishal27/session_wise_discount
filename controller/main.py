@@ -9,4 +9,4 @@ class POSSessionController(http.Controller):
         session = request.env['pos.session'].browse(session_id)
         if session and session.session_discount_limit_amount is not None:
             session.session_discount_limit_amount -= used_discount
-        return {'remaining_limit': session.session_discount_limit_amount}
+        return True
