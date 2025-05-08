@@ -4,6 +4,7 @@ import { patch } from "@web/core/utils/patch";
 import { usePos } from "@point_of_sale/app/store/pos_hook";
 import { _t } from "@web/core/l10n/translation";
 import { rpc } from "@web/core/network/rpc";
+import { AlertDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
 
 
 patch(PaymentScreen.prototype, {
@@ -42,6 +43,10 @@ patch(PaymentScreen.prototype, {
                 await this.notification.add(_t("Session discount limit exceeded."), {
                     title: "Validation Error",
                     type: "warning"
+                });
+                await this.env.services.dialog.add(AlertDialog, {
+                    title: _t("Validation Error"),
+                    body: _t("Session discount limit exceeded."),
                 });
                 return;
             }
